@@ -131,5 +131,5 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-shinylive::export(appdir = "latFlow", destdir = "docs")
+#shinylive::export(appdir = "latFlow", destdir = "docs")
 
