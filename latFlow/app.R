@@ -62,103 +62,55 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-    #make reactive variables before plot
-    # o
-  uaa2 <- reactive({ifel(rast("hydem10mlpns_uaa_streams.tif") >= input$ex, 1, NA) 
-  })
+  #distance to stream
   o <- eventReactive(input$ex,{
-    # if (file.exists("hydem1mlpns_downdist.tif")) {
-    #   #Delete file if it exists
-    #   file.remove("hydem1mlpns_downdist.tif")
-    # }
-                 wbt_downslope_distance_to_stream(dem = "hydem1mlpns_wsbound.tif",
+    uaa2 <- ifel(rast("hydem10mlpns_uaa_streams.tif") >= input$ex, 1, NA)
+    writeRaster(uaa2, "uaa_thresholded.tif", overwrite = TRUE)
+    wbt_downslope_distance_to_stream(dem = "hydem1mlpns_wsbound.tif",
                                      streams = "uaa_thresholded.tif",
                                      output = "hydem1mlpns_downdist.tif")
-    rast("hydem1mlpns_downdist.tif")
+    rast("hydem1mlpns_downdist.tif")})
 
-
-  })
-    # calc travel length
-    
-  # observeEvent(input$mybutton, {
-  #   #writeRaster(uaa2, uaa2_path, overwrite = TRUE)
-  #   bound_dem <- "hydem1mlpns_wsbound.tif"
-  #   w3_downdist <- "hydem1mlpns_downdist.tif"
-  #   uaa2_path <- "uaa_thresholded.tif"
-  #   wbt_downslope_distance_to_stream(dem = bound_dem,
-  #                                    streams = uaa2_path,
-  #                                    output = w3_downdist)
-  # })
-    
+  #make plot
     output$distPlot <- renderPlot({
       #read in stuff needed for plotting
       w3_outline <- vect("10m_shedbound.shp")
-        #hill <- rast("./req/hydem1mlpns_hill.tif")
+      w3_shed <- "hydem1mlpns_shed.tif"
       
-      #thresh <- as.numeric(input$ex) / 100
-        
-        #create stream network extent based on user input
-        
-       #uaa <- rast("hydem10mlpns_uaa_streams.tif")
-      # uaa2 <- ifel(uaa >= input$ex, 1, NA)
-       writeRaster(uaa2(), "uaa_thresholded.tif", overwrite = TRUE)
+      
        
-        #calculate downslope dsitance
-        #bound_dem <- "hydem1mlpns_wsbound.tif"
-       # w3_downdist <- "hydem1mlpns_downdist.tif"
-        #unlink(w3_downdist)
-
-
-        ##calculate average flowpath slope
-        w3_avgflowslope <- "hydem1mlpns_avgflowslope.tif"
         #output already in degrees
-        rads <- rast(w3_avgflowslope) * pi/180
+        rads <- rast("hydem1mlpns_avgflowslope.tif") * pi/180
         
-        #calculate the travel distance
-        ##calculate Lt based on slope and input values
-        #input parameters
-        Ku_Kl <- input$KuKl
-        N <- input$N #meters
-        Cn <- input$Cn
+        #travel distance
+        Lt <- input$KuKl * (sin(rads)/((input$N + input$Cn)/input$Cn)) * input$N
         
-        #caluclate Lt, or travel distance of lateral water flux
-        Lt <- Ku_Kl * (sin(rads)/((N + Cn)/Cn)) * N
+        o <- o() #rast("hydem1mlpns_downdist.tif")
+        #if o is reactive, stream network does not work. 
+        #If o is not reactive, contrib area does not adjust to new network
+        x <- ifel(o <= Lt, 1, NA)
+        uaa2 <- ifel(rast("hydem10mlpns_uaa_streams.tif") >= input$ex, 1, NA)
         
-        
-        
-        #compare downslope distance to travel length
-        x <- ifel(o() <= Lt, 1, NA)
-        w3_shed <- "hydem1mlpns_shed.tif"
-        
-        activated <- ifel(x == uaa2(), 2, x)
+        contributing <- ifel(x == uaa2, 2, x)
         
         #classify output
-        cls <- c("activated hillslope", "stream")
+        cls <- c("contributing hillslope", "stream")
         df <- data.frame(id = 1:2, class=cls)
-        levels(activated) <- df
-        activated <- mask(activated, x)
+        levels(contributing) <- df
+        contributing <- mask(contributing, x)
 
         # draw the histogram with the specified number of bins
         ggplot()+
-          # geom_spatraster(data = hill)+
-          # theme(legend.position = "")+
-          # scale_fill_gradientn(colors = c("gray9", "gray48","lightgray", "white"), guide = 'none')+
-          # new_scale_fill() +
-          geom_spatraster(data = drop_na(activated), aes(fill = class), alpha = 0.7)+
+          geom_spatraster(data = drop_na(contributing), aes(fill = class), alpha = 0.7)+
           scale_fill_manual(values = c("lightblue", "purple"),
                             na.translate=FALSE)+
           theme_void()+
           geom_sf(data = w3_outline, fill = NA, color = "black", alpha = 0.3, lwd = 1)+
           theme(rect = element_rect(fill = "transparent", color = NA),
                 legend.title=element_blank())#+
-          #ggtitle(paste0("Minimum drainage area = ", thresh * 100, "m^2"))
     }) 
-    # output$contributingArea <- renderText({#print the contributing area
-    #   freq(x)
-    # })
 }
 
-#does not work locally, but works remotely
 # Run the application 
 shinyApp(ui = ui, server = server)
 #shinylive::export(appdir = "latFlow", destdir = "docs")
