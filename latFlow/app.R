@@ -7,7 +7,8 @@
 #    https://shiny.posit.co/
 #
 #install.packages(c("shinylive", "httpuv"))
-
+#install.packages("reactlog")
+#library(reactlog)
 library(shiny)
 library(tidyverse)
 library(terra)
@@ -64,7 +65,7 @@ server <- function(input, output) {
       #read in stuff needed for plotting
       w3_outline <- vect("10m_shedbound.shp")
         #hill <- rast("./req/hydem1mlpns_hill.tif")
-      thresh <- input$ex / 100
+      thresh <- as.numeric(input$ex) / 100
         
         #create stream network extent based on user input
         w3_flowacc <- "hydem1mlpns_flowacc.tif"
