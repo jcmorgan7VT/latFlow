@@ -64,17 +64,19 @@ ui <- fluidPage(
 server <- function(input, output) {
     #make reactive variables before plot
     # o
-  uaa2 <- reactive({ifel(rast("hydem10mlpns_uaa_streams.tif") >= input$ex, 1, NA)
-    
+  uaa2 <- reactive({ifel(rast("hydem10mlpns_uaa_streams.tif") >= input$ex, 1, NA) 
   })
-  o <- reactive({
-    observeEvent(input$ex, 
-                 {wbt_downslope_distance_to_stream(dem = "hydem1mlpns_wsbound.tif",
+  o <- eventReactive(input$ex,{
+    # if (file.exists("hydem1mlpns_downdist.tif")) {
+    #   #Delete file if it exists
+    #   file.remove("hydem1mlpns_downdist.tif")
+    # }
+                 wbt_downslope_distance_to_stream(dem = "hydem1mlpns_wsbound.tif",
                                      streams = "uaa_thresholded.tif",
-                                     output = "hydem1mlpns_downdist.tif")})
+                                     output = "hydem1mlpns_downdist.tif")
     rast("hydem1mlpns_downdist.tif")
-    
-    
+
+
   })
     # calc travel length
     
@@ -150,7 +152,7 @@ server <- function(input, output) {
           theme(rect = element_rect(fill = "transparent", color = NA),
                 legend.title=element_blank())#+
           #ggtitle(paste0("Minimum drainage area = ", thresh * 100, "m^2"))
-    })
+    }) 
     # output$contributingArea <- renderText({#print the contributing area
     #   freq(x)
     # })
