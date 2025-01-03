@@ -62,26 +62,26 @@ server <- function(input, output) {
 
     output$distPlot <- renderPlot({
         #read in stuff needed for plotting
-        w3_outline <- vect("./req/10m_shedbound.shp")
-        hill <- rast("./req/hydem1mlpns_hill.tif")
+        #w3_outline <- vect("./req/10m_shedbound.shp")
+        #hill <- rast("./req/hydem1mlpns_hill.tif")
       
         
         #create stream network extent based on user input
-        w3_flowacc <- "./req/hydem1mlpns_flowacc.tif"
-        w3_streams <- "./req/hydem10mlpns_streams_ret.tif"
+        w3_flowacc <- "./docs/req/hydem1mlpns_flowacc.tif"
+        w3_streams <- "./docs/req/hydem10mlpns_streams_ret.tif"
         wbt_extract_streams(flow_accum = w3_flowacc,
                             output = w3_streams,
                             threshold = input$extent)
         
         #calculate downslope dsitance
-        bound_dem <- "./req/hydem1mlpns_wsbound.tif"
-        w3_downdist <- "./req/hydem1mlpns_downdist_ext.tif"
+        bound_dem <- "./docs/req/hydem1mlpns_wsbound.tif"
+        w3_downdist <- "./docs/req/hydem1mlpns_downdist_ext.tif"
         wbt_downslope_distance_to_stream(dem = bound_dem,
                                          streams = w3_streams,
                                          output = w3_downdist)
         
         ##calculate average flowpath slope
-        w3_avgflowslope <- "./req/hydem1mlpns_avgflowslope.tif"
+        w3_avgflowslope <- "./docs/req/hydem1mlpns_avgflowslope.tif"
         #output already in degrees
         wbt_average_flowpath_slope(dem = bound_dem,
                                    output = w3_avgflowslope)
@@ -102,7 +102,7 @@ server <- function(input, output) {
         
         #compare downslope distance to travel length
         x <- ifel(o <= Lt, 1, NA)
-        w3_shed <- "./req/hydem1mlpns_shed.tif"
+        w3_shed <- "./docs/req/hydem1mlpns_shed.tif"
         streams <- rast(w3_streams) %>% 
           mask(rast(w3_shed))
         activated <- ifel(x == streams, 2, x)
@@ -115,15 +115,15 @@ server <- function(input, output) {
 
         # draw the histogram with the specified number of bins
         ggplot()+
-          geom_spatraster(data = hill)+
-          theme(legend.position = "")+
-          scale_fill_gradientn(colors = c("gray9", "gray48","lightgray", "white"), guide = 'none')+
-          new_scale_fill() +
+          # geom_spatraster(data = hill)+
+          # theme(legend.position = "")+
+          # scale_fill_gradientn(colors = c("gray9", "gray48","lightgray", "white"), guide = 'none')+
+          # new_scale_fill() +
           geom_spatraster(data = drop_na(activated), aes(fill = class), alpha = 0.7)+
           scale_fill_manual(values = c("lightblue", "purple"),
                             na.translate=FALSE)+
           theme_void()+
-          geom_sf(data = w3_outline, fill = NA, color = "black", alpha = 0.3, lwd = 1)+
+          #geom_sf(data = w3_outline, fill = NA, color = "black", alpha = 0.3, lwd = 1)+
           theme(rect = element_rect(fill = "transparent", color = NA),
                 legend.title=element_blank())
     })
