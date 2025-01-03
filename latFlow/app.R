@@ -32,7 +32,6 @@ ui <- fluidPage(
                           min = 80,
                           max = 300,
                           value = 80),
-             actionButton("mybutton", "Update Data Model"),
             sliderInput("KuKl",
                         "Ratio of Hydraulic Conductivities:",
                         min = 10,
@@ -53,7 +52,7 @@ ui <- fluidPage(
         # Show a plot of the generated distribution
         mainPanel(
            plotOutput("distPlot")#,
-          # textOutput("activatedArea")
+           #textOutput("contributingArea")
            
         )
     )
@@ -63,8 +62,22 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-    #seperate reaction before making plot
-  
+    #make reactive variables before plot
+    # o
+  uaa2 <- reactive({ifel(rast("hydem10mlpns_uaa_streams.tif") >= input$ex, 1, NA)
+    
+  })
+  o <- reactive({
+    observeEvent(input$ex, 
+                 {wbt_downslope_distance_to_stream(dem = "hydem1mlpns_wsbound.tif",
+                                     streams = "uaa_thresholded.tif",
+                                     output = "hydem1mlpns_downdist.tif")})
+    rast("hydem1mlpns_downdist.tif")
+    
+    
+  })
+    # calc travel length
+    
   # observeEvent(input$mybutton, {
   #   #writeRaster(uaa2, uaa2_path, overwrite = TRUE)
   #   bound_dem <- "hydem1mlpns_wsbound.tif"
@@ -74,6 +87,7 @@ server <- function(input, output) {
   #                                    streams = uaa2_path,
   #                                    output = w3_downdist)
   # })
+    
     output$distPlot <- renderPlot({
       #read in stuff needed for plotting
       w3_outline <- vect("10m_shedbound.shp")
@@ -83,23 +97,15 @@ server <- function(input, output) {
         
         #create stream network extent based on user input
         
-       uaa <- rast("hydem10mlpns_uaa_streams.tif")
-       uaa2 <- ifel(uaa >= input$ex, 1, NA)
-       uaa2_path <- "uaa_thresholded.tif"
-       writeRaster(uaa2, uaa2_path, overwrite = TRUE)
+       #uaa <- rast("hydem10mlpns_uaa_streams.tif")
+      # uaa2 <- ifel(uaa >= input$ex, 1, NA)
+       writeRaster(uaa2(), "uaa_thresholded.tif", overwrite = TRUE)
        
-       observeEvent(input$ex, {
-         #writeRaster(uaa2, uaa2_path, overwrite = TRUE)
-         wbt_downslope_distance_to_stream(dem = bound_dem,
-                                          streams = uaa2_path,
-                                          output = w3_downdist)       })
         #calculate downslope dsitance
-        bound_dem <- "hydem1mlpns_wsbound.tif"
-        w3_downdist <- "hydem1mlpns_downdist.tif"
+        #bound_dem <- "hydem1mlpns_wsbound.tif"
+       # w3_downdist <- "hydem1mlpns_downdist.tif"
         #unlink(w3_downdist)
-        # wbt_downslope_distance_to_stream(dem = bound_dem,
-        #                                  streams = uaa2_path,
-        #                                  output = w3_downdist)
+
 
         ##calculate average flowpath slope
         w3_avgflowslope <- "hydem1mlpns_avgflowslope.tif"
@@ -116,14 +122,13 @@ server <- function(input, output) {
         #caluclate Lt, or travel distance of lateral water flux
         Lt <- Ku_Kl * (sin(rads)/((N + Cn)/Cn)) * N
         
-        o <- rast(w3_downdist)
         
         
         #compare downslope distance to travel length
-        x <- ifel(o <= Lt, 1, NA)
+        x <- ifel(o() <= Lt, 1, NA)
         w3_shed <- "hydem1mlpns_shed.tif"
         
-        activated <- ifel(x == uaa2, 2, x)
+        activated <- ifel(x == uaa2(), 2, x)
         
         #classify output
         cls <- c("activated hillslope", "stream")
@@ -146,8 +151,8 @@ server <- function(input, output) {
                 legend.title=element_blank())#+
           #ggtitle(paste0("Minimum drainage area = ", thresh * 100, "m^2"))
     })
-    # output$activatedArea <- renderText({
-    #   paste0(input$name, "!")
+    # output$contributingArea <- renderText({#print the contributing area
+    #   freq(x)
     # })
 }
 
