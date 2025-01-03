@@ -29,9 +29,10 @@ ui <- fluidPage(
         sidebarPanel(
              sliderInput("ex",
                           "Minimum Drainage area (m^2):",
-                          min = 8000,
-                          max = 30000,
-                          value = 8000),
+                          min = 80,
+                          max = 300,
+                          value = 80),
+             actionButton("mybutton", "Update Data Model"),
             sliderInput("KuKl",
                         "Ratio of Hydraulic Conductivities:",
                         min = 10,
@@ -44,7 +45,7 @@ ui <- fluidPage(
                         value = 3.2),
             sliderInput("N",
                         "Saturated thickness (m):",
-                        min = 0,
+                        min = 0.1,
                         max = 0.35,
                         value = 0.2)
         ),
@@ -60,29 +61,41 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+    #seperate reaction before making plot
+  
+  observeEvent(input$mybutton, {
+    #writeRaster(uaa2, uaa2_path, overwrite = TRUE)
+    bound_dem <- "hydem1mlpns_wsbound.tif"
+    w3_downdist <- "hydem1mlpns_downdist.tif"
+    uaa2_path <- "uaa_thresholded.tif"
+
+    wbt_downslope_distance_to_stream(dem = bound_dem,
+                                     streams = uaa2_path,
+                                     output = w3_downdist)
     
+  })
     output$distPlot <- renderPlot({
       #read in stuff needed for plotting
       w3_outline <- vect("10m_shedbound.shp")
         #hill <- rast("./req/hydem1mlpns_hill.tif")
-      thresh <- reactiveVal(8000)
-      thresh(as.numeric(input$ex/100))
+      
       #thresh <- as.numeric(input$ex) / 100
         
         #create stream network extent based on user input
-        w3_flowacc <- "hydem1mlpns_flowacc.tif"
-        w3_streams <- "hydem10mlpns_streams.tif"
-        wbt_extract_streams(flow_accum = w3_flowacc,
-                            output = w3_streams,
-                            threshold = thresh())
         
+       uaa <- rast("hydem10mlpns_uaa_streams.tif")
+       uaa2 <- ifel(uaa >= input$ex, 1, NA)
+       uaa2_path <- "uaa_thresholded.tif"
+       writeRaster(uaa2, uaa2_path, overwrite = TRUE)
+       
         #calculate downslope dsitance
         bound_dem <- "hydem1mlpns_wsbound.tif"
         w3_downdist <- "hydem1mlpns_downdist.tif"
+        #unlink(w3_downdist)
         wbt_downslope_distance_to_stream(dem = bound_dem,
-                                         streams = w3_streams,
+                                         streams = uaa2_path,
                                          output = w3_downdist)
-        
+
         ##calculate average flowpath slope
         w3_avgflowslope <- "hydem1mlpns_avgflowslope.tif"
         #output already in degrees
@@ -104,9 +117,8 @@ server <- function(input, output) {
         #compare downslope distance to travel length
         x <- ifel(o <= Lt, 1, NA)
         w3_shed <- "hydem1mlpns_shed.tif"
-        streams <- rast(w3_streams) %>% 
-          mask(rast(w3_shed))
-        activated <- ifel(x == streams, 2, x)
+        
+        activated <- ifel(x == uaa2, 2, x)
         
         #classify output
         cls <- c("activated hillslope", "stream")
