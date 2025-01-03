@@ -25,12 +25,12 @@ ui <- fluidPage(
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
-        sidebarPanel(width = 3,
-             sliderInput("extent",
-                          "Minimum Drainage area (10 m^2):",
-                          min = 80,
-                          max = 300,
-                          value = 130),
+        sidebarPanel(
+             sliderInput("ex",
+                          "Minimum Drainage area (m^2):",
+                          min = 8000,
+                          max = 30000,
+                          value = 8000),
             sliderInput("KuKl",
                         "Ratio of Hydraulic Conductivities:",
                         min = 10,
@@ -59,19 +59,19 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-  
+    
     output$distPlot <- renderPlot({
       #read in stuff needed for plotting
-      w3_outline <- (vect("10m_shedbound.shp"))
+      w3_outline <- vect("10m_shedbound.shp")
         #hill <- rast("./req/hydem1mlpns_hill.tif")
-      
+      thresh <- input$ex / 100
         
         #create stream network extent based on user input
         w3_flowacc <- "hydem1mlpns_flowacc.tif"
         w3_streams <- "hydem10mlpns_streams.tif"
         wbt_extract_streams(flow_accum = w3_flowacc,
                             output = w3_streams,
-                            threshold = input$extent)
+                            threshold = thresh)
         
         #calculate downslope dsitance
         bound_dem <- "hydem1mlpns_wsbound.tif"
