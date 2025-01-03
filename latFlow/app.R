@@ -52,7 +52,9 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("distPlot")
+           plotOutput("distPlot")#,
+          # textOutput("activatedArea")
+           
         )
     )
 )
@@ -63,17 +65,15 @@ ui <- fluidPage(
 server <- function(input, output) {
     #seperate reaction before making plot
   
-  observeEvent(input$mybutton, {
-    #writeRaster(uaa2, uaa2_path, overwrite = TRUE)
-    bound_dem <- "hydem1mlpns_wsbound.tif"
-    w3_downdist <- "hydem1mlpns_downdist.tif"
-    uaa2_path <- "uaa_thresholded.tif"
-
-    wbt_downslope_distance_to_stream(dem = bound_dem,
-                                     streams = uaa2_path,
-                                     output = w3_downdist)
-    
-  })
+  # observeEvent(input$mybutton, {
+  #   #writeRaster(uaa2, uaa2_path, overwrite = TRUE)
+  #   bound_dem <- "hydem1mlpns_wsbound.tif"
+  #   w3_downdist <- "hydem1mlpns_downdist.tif"
+  #   uaa2_path <- "uaa_thresholded.tif"
+  #   wbt_downslope_distance_to_stream(dem = bound_dem,
+  #                                    streams = uaa2_path,
+  #                                    output = w3_downdist)
+  # })
     output$distPlot <- renderPlot({
       #read in stuff needed for plotting
       w3_outline <- vect("10m_shedbound.shp")
@@ -88,13 +88,18 @@ server <- function(input, output) {
        uaa2_path <- "uaa_thresholded.tif"
        writeRaster(uaa2, uaa2_path, overwrite = TRUE)
        
+       observeEvent(input$ex, {
+         #writeRaster(uaa2, uaa2_path, overwrite = TRUE)
+         wbt_downslope_distance_to_stream(dem = bound_dem,
+                                          streams = uaa2_path,
+                                          output = w3_downdist)       })
         #calculate downslope dsitance
         bound_dem <- "hydem1mlpns_wsbound.tif"
         w3_downdist <- "hydem1mlpns_downdist.tif"
         #unlink(w3_downdist)
-        wbt_downslope_distance_to_stream(dem = bound_dem,
-                                         streams = uaa2_path,
-                                         output = w3_downdist)
+        # wbt_downslope_distance_to_stream(dem = bound_dem,
+        #                                  streams = uaa2_path,
+        #                                  output = w3_downdist)
 
         ##calculate average flowpath slope
         w3_avgflowslope <- "hydem1mlpns_avgflowslope.tif"
@@ -141,6 +146,9 @@ server <- function(input, output) {
                 legend.title=element_blank())#+
           #ggtitle(paste0("Minimum drainage area = ", thresh * 100, "m^2"))
     })
+    # output$activatedArea <- renderText({
+    #   paste0(input$name, "!")
+    # })
 }
 
 #does not work locally, but works remotely
