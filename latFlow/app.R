@@ -123,7 +123,8 @@ server <- function(input, output) {
           theme_void()+
           geom_sf(data = w3_outline, fill = NA, color = "black", alpha = 0.3, lwd = 1)+
           theme(rect = element_rect(fill = "transparent", color = NA),
-                legend.title=element_blank())
+                legend.title=element_blank())+
+          ggtitle(paste0("Minimum drainage area = ", thresh * 100, "m^2"))
     })
 }
 
