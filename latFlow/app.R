@@ -65,14 +65,16 @@ server <- function(input, output) {
       #read in stuff needed for plotting
       w3_outline <- vect("10m_shedbound.shp")
         #hill <- rast("./req/hydem1mlpns_hill.tif")
-      thresh <- as.numeric(input$ex) / 100
+      thresh <- reactiveVal(8000)
+      thresh(as.numeric(input$ex/100))
+      #thresh <- as.numeric(input$ex) / 100
         
         #create stream network extent based on user input
         w3_flowacc <- "hydem1mlpns_flowacc.tif"
         w3_streams <- "hydem10mlpns_streams.tif"
         wbt_extract_streams(flow_accum = w3_flowacc,
                             output = w3_streams,
-                            threshold = thresh)
+                            threshold = thresh())
         
         #calculate downslope dsitance
         bound_dem <- "hydem1mlpns_wsbound.tif"
@@ -124,8 +126,8 @@ server <- function(input, output) {
           theme_void()+
           geom_sf(data = w3_outline, fill = NA, color = "black", alpha = 0.3, lwd = 1)+
           theme(rect = element_rect(fill = "transparent", color = NA),
-                legend.title=element_blank())+
-          ggtitle(paste0("Minimum drainage area = ", thresh * 100, "m^2"))
+                legend.title=element_blank())#+
+          #ggtitle(paste0("Minimum drainage area = ", thresh * 100, "m^2"))
     })
 }
 
