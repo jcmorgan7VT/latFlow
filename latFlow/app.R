@@ -68,14 +68,14 @@ server <- function(input, output) {
         
         #create stream network extent based on user input
         w3_flowacc <- "./docs/req/hydem1mlpns_flowacc.tif"
-        w3_streams <- "./docs/req/hydem10mlpns_streams_ret.tif"
+        w3_streams <- "./docs/req/hydem10mlpns_streams.tif"
         wbt_extract_streams(flow_accum = w3_flowacc,
                             output = w3_streams,
                             threshold = input$extent)
         
         #calculate downslope dsitance
         bound_dem <- "./docs/req/hydem1mlpns_wsbound.tif"
-        w3_downdist <- "./docs/req/hydem1mlpns_downdist_ext.tif"
+        w3_downdist <- "./docs/req/hydem1mlpns_downdist.tif"
         wbt_downslope_distance_to_stream(dem = bound_dem,
                                          streams = w3_streams,
                                          output = w3_downdist)
