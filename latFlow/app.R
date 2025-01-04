@@ -11,6 +11,7 @@
 #library(reactlog)
 library(pacman)
 p_load(shiny, tidyverse, terra, tidyterra, whitebox, ggnewscale)
+whitebox::install_whitebox()
 # library(shiny)
 # library(tidyverse)
 # library(terra)
