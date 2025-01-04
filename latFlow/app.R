@@ -9,12 +9,14 @@
 #install.packages(c("shinylive", "httpuv"))
 #install.packages("reactlog")
 #library(reactlog)
-library(shiny)
-library(tidyverse)
-library(terra)
-library(tidyterra)
-library(whitebox)
-library(ggnewscale)
+library(pacman)
+p_load(shiny, tidyverse, terra, tidyterra, whitebox, ggnewscale)
+# library(shiny)
+# library(tidyverse)
+# library(terra)
+# library(tidyterra)
+# library(whitebox)
+# library(ggnewscale)
 
 
 
@@ -64,6 +66,7 @@ ui <- fluidPage(
 server <- function(input, output) {
   #distance to stream
   o <- eventReactive(input$ex,{
+    #file.remove("hydem1mlpns_downdist.tif")
     uaa2 <- ifel(rast("hydem10mlpns_uaa_streams.tif") >= input$ex, 1, NA)
     writeRaster(uaa2, "uaa_thresholded.tif", overwrite = TRUE)
     wbt_downslope_distance_to_stream(dem = "hydem1mlpns_wsbound.tif",
