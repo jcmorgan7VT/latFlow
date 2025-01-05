@@ -1,0 +1,12 @@
+name: latFlow
+title: latFlow
+username: aluyge-john-morgan
+account: aluyge-john-morgan
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13660955
+bundleId: 9603471
+url: https://aluyge-john-morgan.shinyapps.io/latFlow/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
